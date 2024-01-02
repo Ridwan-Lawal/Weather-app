@@ -8,10 +8,6 @@ import "animate.css";
 
 let apiKey = "7db2b037e80a4b56ba9134126232202";
 
-// start controlling the fetch request based on the location inputed on the form and set the default location to london or use the navigator.geolocation api to get the location of the user and set the location as the default location, before checking for another location.
-
-// handle the cleanup function to cancel or reset the previous effect by cancelling the previous fetch request before each execution of the effect(new fetch request is made)
-
 export default function App() {
   const [searchLocation, setSearchLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -54,13 +50,17 @@ export default function App() {
             }&days=7`,
             { signal }
           );
+          console.log(res);
           if (!res.ok) throw new Error("Something went wrong");
 
           const data = await res.json();
+          console.log(data);
           setWeatherResult(data);
         } catch (err) {
-          if (err.message.includes("aborted")) return;
-          setErrorMsg(err.message);
+          if (err.message !== "The user aborted a request.") {
+            console.error(err.message);
+            setErrorMsg(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -75,6 +75,10 @@ export default function App() {
     [searchLocation, userLocation]
   );
 
+  function handleLiveLocation() {
+    setSearchLocation("");
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 lg:flex font-raleway">
       <div className="lg:w-[35%] bg-header lg:bg-none lg:bg-gray-900">
@@ -83,7 +87,7 @@ export default function App() {
           errorMsg={errorMsg}
           weatherResult={weatherResult}
         >
-          <Nav>
+          <Nav onLiveLocaton={handleLiveLocation}>
             <SearchForm
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
@@ -162,12 +166,12 @@ function Header({
 
   return (
     <header className="  h-full ">
-      <div className="h-fit bg-gray-900 bg-opacity-80 lg:bg-opacity-100 bg-no-repeat pt-5 pb-8 px-6">
+      <div className="h-fit bg-gray-900 bg-opacity-80 lg:bg-opacity-100 bg-no-repeat pt-0 ">
         {children}
         {errorMsg && <Error error={errorMsg} />}
         {isLoading && <Loader />}
         {!errorMsg && !isLoading && (
-          <div>
+          <div className="pb-8 pt-5 px-6">
             {/* header content */}
             <div className="  mt-20 flex flex-col items-center">
               <img
@@ -205,17 +209,34 @@ function Header({
   );
 }
 
-function Nav({ children }) {
+function Nav({ children, onLiveLocaton }) {
   const [isClicked, setIsClicked] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(function () {
+    window.addEventListener("scroll", (e) => {
+      console.log(window.scrollY);
+      if (window.scrollY > 650) setIsScrolled(true);
+      else setIsScrolled(false);
+    });
+  }, []);
+
   return (
-    <div className="flex justify-between  gap-5 ">
+    <div
+      className={`flex justify-between px-6 pt-5  gap-5 ${
+        isScrolled && "fixed bg-gray-800 shadow-lg w-[100%] py-4"
+      } `}
+    >
       <section className={`flex  ${isClicked ? "w-[80%]" : "w-fit"} gap-5`}>
         <div onClick={() => setIsClicked((curStatus) => !curStatus)}>
           <SearchBar isClicked={isClicked} />
         </div>
         {isClicked && children}
       </section>
-      <button className="bg-gray-700   py-1 px-3 cursor-pointer rounded-full">
+      <button
+        onClick={onLiveLocaton}
+        className="bg-gray-700   py-1 px-3 cursor-pointer rounded-full"
+      >
         <FaLocationDot className="text-gray-100 text-xl" />
       </button>
     </div>
@@ -228,7 +249,7 @@ function SearchBar({ isClicked }) {
       <section>
         <button className="bg-gray-700 hover:scale-105 transition-transform  py-2 px-2 cursor-pointer rounded-full">
           {isClicked ? (
-            <IoCloseOutline className="text-2xl md:hidden text-white" />
+            <IoCloseOutline className="text-2xl  text-white" />
           ) : (
             <CiSearch className="text-2xl text-white" />
           )}
@@ -243,9 +264,13 @@ function SearchBar({ isClicked }) {
 // }
 
 function SearchForm({ value, onChange }) {
+  function handleSubmit(e) {
+    e.preventDefault();
+  }
   return (
     <form
       action=""
+      onSubmit={handleSubmit}
       className="w-full animate__animated animate__bounceIn  shadow-2xl rounded-md overflow-hidden bg-gray-900 flex"
     >
       <input
