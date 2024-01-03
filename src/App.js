@@ -50,11 +50,11 @@ export default function App() {
             }&days=7`,
             { signal }
           );
-          console.log(res);
+
           if (!res.ok) throw new Error("Something went wrong");
 
           const data = await res.json();
-          console.log(data);
+
           setWeatherResult(data);
         } catch (err) {
           if (err.message !== "The user aborted a request.") {
@@ -215,7 +215,6 @@ function Nav({ children, onLiveLocaton }) {
 
   useEffect(function () {
     window.addEventListener("scroll", (e) => {
-      console.log(window.scrollY);
       if (window.scrollY > 650) setIsScrolled(true);
       else setIsScrolled(false);
     });
