@@ -45,7 +45,7 @@ export default function App() {
           setIsLoading(true);
           setErrorMsg("");
           const res = await fetch(
-            ` http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${
+            `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${
               !searchLocation ? userLocation : searchLocation
             }&days=7`,
             { signal }
